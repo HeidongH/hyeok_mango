@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mypage">
+	<select id="getMannerProfile" parameterType="String" resultType="com.sp.mango.mypage.MannerProfile">
+		SELECT userId, mannerStar, productStar, minusDeg FROM mannerProfile
+		WHERE userId = #{userId}
+	</select>
+	<insert id="insertMannerProfile" parameterType="String">
+		INSERT INTO mannerProfile (userId, mannerStar, productStar, minusDeg)
+		VALUES (#{userId}, 0,0,0)
+	</insert>
+	<select id="listAddr" parameterType="String" resultType="com.sp.mango.member.MemberAddr">
+		SELECT maNum, a.area1, a.area2, a.area3
+		FROM memberAddr m
+		JOIN area a ON m.areaNum = a.areaNum
+		WHERE userId = #{userId}
+	</select>
+	<select id="readBusiness" parameterType="String" resultType="com.sp.mango.member.Business">
+		SELECT userId, busNickName, busTel, busEmail, membershipNum, busImgSaveFileName, busImgOrigFileName,
+			b.areaNum, busAddr1, busAddr2, busZip, bpLat, bpLon, a.area1, a.area2, a.area3
+		FROM businessProfile b
+		JOIN area a ON a.areaNum = b.areaNum
+		WHERE userId = #{userId}
+	</select>
+	
+	<select id="listPickedUser" parameterType="String" resultType="com.sp.mango.mypage.PickedUser">
+		SELECT pickedNum, target_id, TO_CHAR(regDate,'YYYY-MM-DD') regDate
+		FROM pickedUser
+		WHERE userId = #{userId}
+	</select>
+	
+	<select id="listBlockedUser" parameterType="String" resultType="com.sp.mango.mypage.BlockedUser">
+		SELECT blockNum, target_id, TO_CHAR(regDate,'YYYY-MM-DD') regDate
+		FROM blockedUser
+		WHERE userId = #{userId}
+	</select>
+	
+	<select id="listKeyword" parameterType="String" resultType="com.sp.mango.mypage.Keyword">
+		SELECT keywordNum, keyword, TO_CHAR(regDate,'YYYY-MM-DD') regDate
+		FROM keyword
+		WHERE userId = #{userId}
+	</select>
+	
+	<select id="myPickCount" parameterType="map" resultType="Integer">
+		SELECT NVL(COUNT(*),0)
+		FROM pickedUser p
+		JOIN member m ON p.target_id = m.userId
+		<where>
+			p.userId = #{userId}
+			<if test="keyword != null and keyword != '' ">
+				AND
+				INSTR(m.userNickName, #{keyword}) > 0
+			</if>
+		</where>
+	</select>
+	
+	<select id="listMyPickedUser" parameterType="map" resultType="com.sp.mango.mypage.PickedUser">
+		SELECT * FROM (
+			SELECT ROWNUM rnum, tb.* FROM (	
+				SELECT pickedNum, p.userId, p.target_id, m.userNickName, p.regDate
+				FROM pickedUser p
+				JOIN member m ON p.target_id = m.userId
+				<where>
+					p.userId = #{userId}
+					<if test="keyword != null and keyword != '' ">
+						AND
+						INSTR(m.userNickName, #{keyword}) > 0
+					</if>
+				</where>
+				ORDER BY p.regDate DESC
+			) tb WHERE ROWNUM &lt;= #{end}
+		) WHERE rnum &gt;= #{start}
+	</select>
+	
+	<select id="readUserIdByNickName" parameterType="String" resultType="String">
+		SELECT userId
+		FROM member
+		WHERE userNickName = #{userNickName}
+	</select>
+	
+	<insert id="insertPickedUser" parameterType="map">
+		INSERT INTO pickedUser
+		(pickedNum, userId, target_id, regDate)
+		VALUES
+		(pickedUser_seq.NEXTVAL, #{userId}, #{target_id}, SYSDATE)
+	</insert>
+	
+	<delete id="deleteMySelection" parameterType="map">
+		DELETE FROM ${tableName} WHERE ${seqName} = #{seqNum}
+	</delete>
+	
+	<select id="myBlockCount" parameterType="map" resultType="Integer">
+		SELECT NVL(COUNT(*),0)
+		FROM blockedUser p
+		JOIN member m ON p.target_id = m.userId
+		<where>
+			p.userId = #{userId}
+			<if test="keyword != null and keyword != '' ">
+				AND
+				INSTR(m.userNickName, #{keyword}) > 0
+			</if>
+		</where>
+	</select>
+	
+	<select id="listMyBlockedUser" parameterType="map" resultType="com.sp.mango.mypage.BlockedUser">
+		SELECT * FROM (
+			SELECT ROWNUM rnum, tb.* FROM (	
+				SELECT blockNum, p.userId, p.target_id, m.userNickName, p.regDate
+				FROM blockedUser p
+				JOIN member m ON p.target_id = m.userId
+				<where>
+					p.userId = #{userId}
+					<if test="keyword != null and keyword != '' ">
+						AND
+						INSTR(m.userNickName, #{keyword}) > 0
+					</if>
+				</where>
+				ORDER BY p.regDate DESC	
+			) tb WHERE ROWNUM &lt;= #{end}
+		) WHERE rnum &gt;= #{start}
+	</select>
+	
+	<insert id="insertBlockedUser" parameterType="map">
+		INSERT INTO blockedUser
+		(blockNum, userId, target_id, regDate)
+		VALUES
+		(blockedUser_seq.NEXTVAL, #{userId}, #{target_id}, SYSDATE)
+	</insert>
+	
+	<select id="myKeywordCount" parameterType="map" resultType="Integer">
+		SELECT NVL(COUNT(*),0)
+		FROM keyword
+		<where>
+			userId = #{userId}
+			<if test="keyword != null and keyword != '' ">
+				AND
+				INSTR(keyword, #{keyword}) > 0
+			</if>
+		</where>
+	</select>
+	
+	<select id="listMyKeyword" parameterType="map" resultType="com.sp.mango.mypage.Keyword">
+		SELECT * FROM (
+			SELECT ROWNUM rnum, tb.* FROM (	
+				SELECT keywordNum, userId, keyword, regDate
+				FROM keyword
+				<where>
+					userId = #{userId}
+					<if test="keyword != null and keyword != '' ">
+						AND
+						INSTR(keyword, #{keyword}) > 0
+					</if>
+				</where>
+				ORDER BY regDate DESC
+			) tb WHERE ROWNUM &lt;= #{end}
+		) WHERE rnum &gt;= #{start}
+	</select>
+	
+	<insert id="insertKeyword" parameterType="map">
+		INSERT INTO keyword
+		(keywordNum, userId, keyword, regDate)
+		VALUES
+		(keyword_seq.NEXTVAL, #{userId}, #{keyword}, SYSDATE)
+	</insert>
+	
+	<sql id="note-where-list">
+		<choose>
+			<when test="condition=='all'">
+				( INSTR(userNickName,#{keyword}) &gt; 0 
+					OR INSTR(noteContent, #{keyword}) &gt; 0 )
+			</when>
+			<when test="condition=='userNickName'">
+				INSTR(userNickName,#{keyword}) &gt; 0
+			</when>
+			<when test="condition=='noteContent'">
+				INSTR(noteContent, #{keyword}) &gt; 0
+			</when>
+		</choose>
+	</sql>
+	
+	<select id="getBlockCount" parameterType="String" resultType="Integer">
+		SELECT NVL(COUNT(*),0)
+		FROM blockedUser
+		WHERE userId = #{userId}
+	</select>
+	
+	<select id="listNoteSender" parameterType="map" resultType="com.sp.mango.mypage.Note">
+		SELECT DISTINCT n.sendId, userNickName
+		FROM note n
+		JOIN member m ON n.sendId = m.userId
+		<where>
+			<if test="keyword != null and keyword != '' ">
+				<include refid="note-where-list"/>
+			</if>
+			<if test="blockNum &gt; 0">
+				AND m.userId NOT IN (
+		            SELECT target_ID FROM blockeduser
+		            WHERE userId = #{userId}
+		        )
+			</if>
+			AND
+			receiveId = #{userId}
+			AND NOT (
+			    (isSendDelete != 'F' AND noteReadDate IS NULL)
+			    OR (isRecDelete != 'F')
+			)
+		</where>
+		ORDER BY userNickName
+	</select>
+	
+	<select id="listNoteReceiver" parameterType="map" resultType="com.sp.mango.mypage.Note">
+		SELECT DISTINCT n.receiveId, userNickName
+		FROM note n
+		JOIN member m ON n.receiveId = m.userId
+		<where>
+			<if test="keyword != null and keyword != '' ">
+				<include refid="note-where-list"/>
+			</if>
+			<if test="blockNum &gt; 0">
+				AND m.userId NOT IN (
+		            SELECT target_ID FROM blockeduser
+		            WHERE userId = #{userId}
+		        )
+			</if>
+			AND
+			sendId = #{userId}
+			AND (
+			    isSendDelete = 'F'
+			)
+		</where>
+		ORDER BY userNickName
+	</select>
+	
+	<select id="readNoteLastTime" parameterType="map" resultType="com.sp.mango.mypage.Note">
+		SELECT noteNum, sendId, receiveId, userNickName, recentDPlus, noteContent FROM (
+		    SELECT ROWNUM AS rnum2, noteNum, sendId, receiveId, userNickName, recentDPlus, noteContent FROM (
+		        SELECT ROWNUM AS rnum, noteNum, sendId, userNickName, receiveId, noteRegDate, noteContent, SYSDATE-noteRegDate recentDPlus
+		        FROM note n
+		        JOIN member m ON n.receiveId = m.userId
+		        <where>
+					<if test="keyword != null and keyword != '' ">
+						<include refid="note-where-list"/>
+					</if>
+					AND
+					(
+				        (receiveId = #{meId} AND sendId = #{youId} AND (  
+				            	NOT (
+						            isRecDelete != 'F'
+						            OR
+						            (
+						                noteReadDate IS NULL
+						                AND
+						                isSendDelete != 'F'
+						            )
+						        )
+				            )
+				        )
+				        OR
+				        (receiveId = #{youId} AND sendId = #{meId} AND isSendDelete != 'T')
+					)
+				</where>	
+		        ORDER BY noteRegDate DESC
+		    )
+		) WHERE rnum2 = 1
+	</select>
+	
+	<select id="listNoteNote" parameterType="map" resultType="com.sp.mango.mypage.Note">
+		SELECT noteNum, sendId, userNickName, receiveId, noteRegDate, noteContent, SYSDATE-noteRegDate recentDPlus, noteReadDate
+		FROM note n
+		JOIN member m ON n.receiveId = m.userId
+		WHERE
+	        receiveId = #{meId} AND sendId = #{youId} AND (  
+	            NOT (
+		            isRecDelete != 'F'
+		            OR
+		            (
+		                noteReadDate IS NULL
+		                AND
+		                isSendDelete != 'F'
+		            )
+		        )
+	        )
+	        OR
+	        (receiveId = #{youId} AND sendId = #{meId} AND isSendDelete != 'T')
+		ORDER BY noteRegDate DESC
+	</select>
+	
+	<insert id="insertNote" parameterType="map">
+		INSERT INTO note (noteNum, sendId, receiveId, noteContent, noteRegdate, isSendDelete, isRecDelete)
+			VALUES (note_seq.NEXTVAL, #{sendId},#{receiveId},#{noteContent},SYSDATE, 'F','F')
+	</insert>
+	
+	<update id="updateNoteReadDate" parameterType="map">
+		UPDATE note SET noteReadDate = SYSDATE
+		WHERE
+			receiveId = #{meId}
+		    AND sendId = #{youId}
+		    AND noteReadDate IS NULL
+		    AND isSendDelete != 'T'
+	</update>
+	
+	<update id="updateSendDelete" parameterType="map">
+		UPDATE note SET isSendDelete = 'T'
+			WHERE noteNum = #{noteNum}
+	</update>
+	
+	<update id="updateReceiveDelete" parameterType="map">
+		UPDATE note SET isRecDelete = 'T'
+			WHERE noteNum = #{noteNum}
+	</update>
+	
+	<update id="updateUserAllDelete" parameterType="map">
+		UPDATE note SET ${isSendOrRec}='T'
+			WHERE sendId=#{sendId} AND receiveId=#{receiveId}
+	</update>
+	
+	<update id="updateEntireMyNoteDelete" parameterType="map">
+		UPDATE note SET ${isSendOrRec}='T'
+			WHERE ${sendOrRecId}=#{meId}
+	</update>
+	
+	<select id="listRating" parameterType="map" resultType="com.sp.mango.mypage.Rating">
+		SELECT * FROM (
+		    SELECT ROWNUM rnum, tb.* FROM(
+		        SELECT 'product' AS pgType, pr.PNUM pgNum, p.psubject subject, buyerId, m.userNickName buyerNick, mannerStar, prdStar, sellerId, prContent reviewContent, userImgSaveFileName, pSoldDate AS soldDate
+		        FROM pReview pr
+		        JOIN member m ON pr.buyerId = m.userId
+		        JOIN product p ON pr.pnum = p.pnum
+		        WHERE sellerId=#{userId}
+		        
+		        UNION ALL
+		        
+		        SELECT 'giftycon' AS pgType, gr.GNUM pgNum, g.gsubject subject, buyerId, m.userNickName buyerNick, mannerStar, null AS prdStar, sellerId, grContent reviewContent, userImgSaveFileName, gSoldDate AS soldDate
+		        FROM gReview gr
+		        JOIN member m ON gr.buyerId = m.userId
+		        JOIN giftycon g ON gr.gnum = g.gnum
+		        WHERE sellerId =#{userId}
+		        
+		        ORDER BY soldDate DESC    
+		    ) tb WHERE ROWNUM &lt;= #{end}
+		) WHERE rnum &gt;= #{start}
+	</select>
+	
+	<select id="listProductRating" parameterType="map" resultType="com.sp.mango.mypage.Rating">
+		SELECT * FROM (
+		    SELECT ROWNUM rnum, tb.* FROM(
+				SELECT 'product' AS pgType, pr.PNUM pgNum, p.psubject subject, buyerId, m.userNickName buyerNick, mannerStar, prdStar, sellerId, prContent reviewContent, userImgSaveFileName, pSoldDate AS soldDate
+				FROM pReview pr
+				JOIN member m ON pr.buyerId = m.userId
+				JOIN product p ON pr.pnum = p.pnum
+				WHERE sellerId=#{userId}
+				ORDER BY soldDate DESC
+			) tb WHERE ROWNUM &lt;= #{end}
+		) WHERE rnum &gt;= #{start}
+	</select>
+	
+	<select id="listGiftyRating" parameterType="map" resultType="com.sp.mango.mypage.Rating">
+		SELECT * FROM (
+		    SELECT ROWNUM rnum, tb.* FROM(
+				SELECT 'giftycon' AS pgType, gr.GNUM pgNum, g.gsubject subject, buyerId, m.userNickName buyerNick, mannerStar, null AS prdStar, sellerId, grContent reviewContent, userImgSaveFileName, gSoldDate AS soldDate
+				FROM gReview gr
+				JOIN member m ON gr.buyerId = m.userId
+				JOIN giftycon g ON gr.gnum = g.gnum
+				WHERE sellerId =#{userId}
+				ORDER BY soldDate DESC
+			) tb WHERE ROWNUM &lt;= #{end}
+		) WHERE rnum &gt;= #{start}
+	</select>
+	
+	<select id="countRating" parameterType="String" resultType="Integer">	
+		SELECT NVL(COUNT(*),0) cnt
+		FROM pReview
+		WHERE sellerId=#{userId}
+		UNION ALL
+		SELECT NVL(COUNT(*),0) cnt
+		FROM gReview
+		WHERE sellerId=#{userId}
+	</select>
+	
+	<select id="countProductRating" parameterType="String" resultType="Integer">
+		SELECT NVL(COUNT(*),0) cnt
+		FROM pReview
+		WHERE sellerId=#{userId}	
+	</select>
+	
+	<select id="countGiftyRating" parameterType="String" resultType="Integer">
+		SELECT NVL(COUNT(*),0) cnt
+		FROM gReview
+		WHERE sellerId=#{userId}	
+	</select>
+	
+	<select id="countActivity" parameterType="map" resultType="Integer">
+		<trim suffixOverrides="UNION ALL">
+			<if test="product == 'true'">
+				SELECT  NVL(COUNT(*),0) cnt FROM product WHERE userId = #{userId}
+				UNION ALL
+			</if>
+			<if test="giftycon == 'true'">
+				SELECT  NVL(COUNT(*),0) cnt FROM giftycon WHERE userId = #{userId}
+				UNION ALL
+			</if>
+			<if test="vbbs == 'true'">
+				SELECT  NVL(COUNT(*),0) cnt FROM village_bbs WHERE userId = #{userId}
+				UNION ALL
+			</if>
+			<if test="vbbsReply == 'true'">
+				SELECT  NVL(COUNT(*),0) cnt FROM vbbsReply WHERE userId = #{userId}
+				UNION ALL
+			</if>
+		</trim>
+	</select>
+	
+	<select id="listActivity" parameterType="map" resultType="com.sp.mango.mypage.Activity">
+		SELECT * FROM (
+		    SELECT ROWNUM rnum, tb.* FROM(
+				<trim prefix="(" suffixOverrides="UNION ALL" suffix=") ORDER BY regDate DESC">
+					<if test="product == 'true'">
+						SELECT 'product' myType, pNum num, pcNum catNum, pSubject subject, pRegdate regDate
+						FROM product
+						WHERE userId = #{userId}
+						UNION ALL
+					</if>
+					<if test="giftycon == 'true'">
+						SELECT 'giftycon' myType, gNum num, gcNum catNum, gSubject subject, gRegdate regDate
+						FROM giftycon
+						WHERE userId = #{userId}
+						UNION ALL			
+					</if>
+					<if test="vbbs == 'true'">
+						SELECT 'vbbs' myType, vNum num, vcNum catNum, subject, regDate
+						FROM village_bbs
+						WHERE userId = #{userId}
+						UNION ALL	
+					</if>
+					<if test="vbbsReply == 'true'">
+						SELECT 'vbbsReply' myType, r.vNum num, v.vcNum catNum, vrContent subject, vrRegDate regDate
+						FROM vbbsReply r
+						JOIN village_bbs v ON r.vNum = v.vNum
+						WHERE v.userId = #{userId}
+						UNION ALL
+					</if>
+				</trim>
+		    ) tb WHERE ROWNUM &lt;= #{end}
+		) WHERE rnum &gt;= #{start}		
+	</select>
+	
+	<select id ="getVbbsCatNumByReply" parameterType="Integer" resultType="Integer">
+		SELECT vcNum FROM village_bbs WHERE vNum = #{vNum}
+	</select>
+	
+	<select id="countAccount" parameterType="map" resultType="Integer">
+		SELECT NVL(COUNT(*),0) cnt FROM ( 
+			SELECT NVL2(a.pNum,'product','giftycon') pgType, myAcNum, a.userId, target_id, income, expenses, itemName, NVL2(a.pNum,a.pNum,a.gNum) num, m.userNickName,
+				NVL2(a.pNum,p.pSubject,g.gSubject) subject, NVL2(a.pNum,p.pSoldDate,g.gSoldDate) soldDate, NVL2(a.pNum, p.userId, g.userId) sellerId
+			FROM myAccount a
+			JOIN member m ON a.target_id = m.userId
+			LEFT OUTER JOIN product p ON a.pNum = p.pNum
+			LEFT OUTER JOIN giftycon g ON a.gNum = g.gNum
+			WHERE a.userId = #{userId}
+			<if test="chkpg == 'product'">
+				AND NVL2(a.pNum,'product','giftycon') = 'product'
+			</if>
+			<if test="chkpg == 'gifty'">
+				AND NVL2(a.pNum,'product','giftycon') = 'giftycon'
+			</if>
+			<if test="acStartDate != null and acStartDate != '' and acStartDate != 'false' ">
+				AND TO_CHAR(NVL2(a.pNum,p.pSoldDate,g.gSoldDate),'YYYYMMDD') &gt;= #{acStartDate}
+			</if>
+			<if test="acEndDate != null and acEndDate != '' and acEndDate != 'false' ">
+				AND TO_CHAR(NVL2(a.pNum,p.pSoldDate,g.gSoldDate),'YYYYMMDD') &lt;= #{acEndDate}
+			</if>
+		<if test="chkbs == 'sell' ">
+			) WHERE userId = sellerId
+		</if>
+		<if test="chkbs == 'buy' ">
+			) WHERE userId != sellerId
+		</if>
+		<if test="chkbs == null or chkbs == '' ">
+			)
+		</if>
+	</select>
+	
+	<select id="listAccount" parameterType="map" resultType="com.sp.mango.mypage.Account">
+		SELECT * FROM (
+		    SELECT ROWNUM rnum, tb.* FROM(
+			    <if test="chkbs != null and chkbs != '' ">
+			    	SELECT * FROM (
+			    </if>
+					SELECT NVL2(a.pNum,'product','giftycon') pgType, myAcNum, a.userId, target_id, income, expenses, itemName, NVL2(a.pNum,a.pNum,a.gNum) num, m.userNickName,
+					    NVL2(a.pNum,p.pSubject,g.gSubject) subject, NVL2(a.pNum,p.pSubject,g.gSubject) fullSubject,
+					    TO_CHAR(NVL2(a.pNum,p.pSoldDate,g.gSoldDate),'YYYY-MM-DD') soldDate, NVL2(a.pNum, p.userId, g.userId) sellerId,
+					    NVL2(a.pNum,p.pSoldDate,g.gSoldDate) fullSoldDate
+					FROM myAccount a
+					JOIN member m ON a.target_id = m.userId
+					LEFT OUTER JOIN product p ON a.pNum = p.pNum
+					LEFT OUTER JOIN giftycon g ON a.gNum = g.gNum
+					WHERE a.userId = #{userId}
+					<if test="chkpg == 'product'">
+						AND NVL2(a.pNum,'product','giftycon') = 'product'
+					</if>
+					<if test="chkpg == 'gifty'">
+						AND NVL2(a.pNum,'product','giftycon') = 'giftycon'
+					</if>
+					<if test="acStartDate != null and acStartDate != '' and acStartDate != 'false' ">
+						AND TO_CHAR(NVL2(a.pNum,p.pSoldDate,g.gSoldDate),'YYYYMMDD') &gt;= #{acStartDate}
+					</if>
+					<if test="acEndDate != null and acEndDate != '' and acEndDate != 'false' ">
+						AND TO_CHAR(NVL2(a.pNum,p.pSoldDate,g.gSoldDate),'YYYYMMDD') &lt;= #{acEndDate}
+					</if>
+					ORDER BY fullSoldDate DESC
+				<if test="chkbs == 'sell' ">
+					) WHERE userId = sellerId
+				</if>
+				<if test="chkbs == 'buy' ">
+					) WHERE userId != sellerId
+				</if>	
+		    ) tb WHERE ROWNUM &lt;= #{end}
+		) WHERE rnum &gt;= #{start}					
+	</select>
+	
+	<select id = "listRepMemReason" resultType="com.sp.mango.mypage.RepMemberReason">
+		SELECT rmReasonNum, rmReasonName
+		FROM repMember_Reason
+	</select>
+	
+	<insert id = "insertReportMember" parameterType="map">
+		INSERT INTO reportMember (repMemNum, repMemContent, rmReasonNum, repMemRegDate, repMemChecked, userId, target_id)
+		VALUES (reportMember_seq.NEXTVAL, #{content}, #{reasonNum}, SYSDATE, 'F', #{userId}, #{target_id})
+	</insert>
+	
+	<select id= "countNotReadNote" parameterType="map" resultType="Integer">
+		SELECT NVL(COUNT(*),0) cnt FROM note
+		WHERE receiveId = #{meId}
+		<if test="blockNum &gt; 0">
+			AND sendId NOT IN (
+	            SELECT target_ID FROM blockeduser
+	            WHERE userId = #{meId}
+	        )
+		</if>		
+		AND (noteReadDate IS NULL OR noteReadDate = '')
+		AND isSendDelete = 'F'
+		AND isRecDelete = 'F'	
+	</select>
+	
+	<select id="countNotReadEachNote" parameterType="map" resultType="Integer">
+		SELECT NVL(COUNT(*),0) cnt FROM note
+		WHERE receiveId = #{meId}
+		AND sendId = #{youId}
+		AND (noteReadDate IS NULL OR noteReadDate = '')
+		AND isSendDelete = 'F'
+		AND isRecDelete = 'F'	
+	</select>
+	
+</mapper>
