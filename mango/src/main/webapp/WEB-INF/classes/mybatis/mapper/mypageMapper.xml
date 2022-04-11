@@ -10,6 +10,7 @@
 		INSERT INTO mannerProfile (userId, mannerStar, productStar, minusDeg)
 		VALUES (#{userId}, 0,0,0)
 	</insert>
+	
 	<select id="listAddr" parameterType="String" resultType="com.sp.mango.member.MemberAddr">
 		SELECT maNum, a.area1, a.area2, a.area3
 		FROM memberAddr m
