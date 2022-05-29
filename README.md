@@ -49,4 +49,4 @@ __참고자료__ | 당근마켓(https://www.daangn.com/)
 - Javascript, jQuery, Ajax
 - JSON, XML
 - Spring, MyBatis3, Tiles, Maven
-- GIT
+- GIT 
