@@ -50,3 +50,6 @@ __참고자료__ | 당근마켓(https://www.daangn.com/)
 - JSON, XML
 - Spring, MyBatis3, Tiles, Maven
 - GIT 
+
+프로젝트 설명 :
+https://heidong.tistory.com/161?category=1023345
